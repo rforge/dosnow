@@ -113,8 +113,14 @@ doSNOW <- function(obj, expr, envir, data) {
     }
   }
 
+  # compile the expression if we can load the compiler package
+  xpr <- if (suppressWarnings(require('compiler', quietly=TRUE)))
+    compile(expr, env=envir, options=list(suppressUndefined=TRUE))
+  else
+    expr
+
   # send exports to workers
-  r <- clusterCall(cl, workerInit, expr, exportenv, obj$packages)
+  r <- clusterCall(cl, workerInit, xpr, exportenv, obj$packages)
   for (emsg in r) {
     if (!is.null(emsg))
       stop('worker initialization failed: ', emsg)
