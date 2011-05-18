@@ -57,6 +57,12 @@ evalWrapper <- function(args) {
   tryCatch(eval(.doSnowGlobals$expr, envir=.doSnowGlobals$exportenv), error=function(e) e)
 }
 
+comp <- if (getRversion() < "2.13.0") {
+  function(expr, ...) expr
+} else {
+  compiler::compile
+}
+
 doSNOW <- function(obj, expr, envir, data) {
   cl <- data
 
@@ -113,11 +119,8 @@ doSNOW <- function(obj, expr, envir, data) {
     }
   }
 
-  # compile the expression if we can load the compiler package
-  xpr <- if (suppressWarnings(require('compiler', quietly=TRUE)))
-    compile(expr, env=envir, options=list(suppressUndefined=TRUE))
-  else
-    expr
+  # compile the expression if we're using R 2.13.0 or greater
+  xpr <- comp(expr, env=envir, options=list(suppressUndefined=TRUE))
 
   # send exports to workers
   r <- clusterCall(cl, workerInit, xpr, exportenv, obj$packages)
