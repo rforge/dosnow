@@ -53,6 +53,9 @@ workerInit <- function(expr, exportenv, packages) {
 }
 
 evalWrapper <- function(args) {
+  exportEnv <- .doSnowGlobals$exportenv
+  attach(exportEnv)
+  on.exit(detach(exportEnv))
   lapply(names(args), function(n) assign(n, args[[n]], pos=.doSnowGlobals$exportenv))
   tryCatch(eval(.doSnowGlobals$expr, envir=.doSnowGlobals$exportenv), error=function(e) e)
 }
@@ -130,6 +133,9 @@ doSNOW <- function(obj, expr, envir, data) {
   }
 
   # execute the tasks
+  if (obj$verbose){
+  cat(sprintf('length(argsList) is: %s\n', length(argsList)))
+  }
   results <- clusterApplyLB(cl, argsList, evalWrapper)
 
   # call the accumulator with all of the results
