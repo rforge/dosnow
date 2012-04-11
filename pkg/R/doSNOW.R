@@ -133,9 +133,6 @@ doSNOW <- function(obj, expr, envir, data) {
   }
 
   # execute the tasks
-  if (obj$verbose){
-  cat(sprintf('length(argsList) is: %s\n', length(argsList)))
-  }
   results <- clusterApplyLB(cl, argsList, evalWrapper)
 
   # call the accumulator with all of the results
