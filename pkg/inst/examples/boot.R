@@ -1,9 +1,10 @@
-library(doSNOW)
+suppressMessages(library(doSNOW))
 cl <- makeSOCKcluster(4)
 registerDoSNOW(cl)
 
+cat(sprintf('doSNOW %s\n', packageVersion('doSNOW')))
 junk <- matrix(0, 1000000, 8)
-print(object.size(junk))
+cat(sprintf('Size of extra junk data: %d bytes\n', object.size(junk)))
 
 x <- iris[which(iris[,5] != "setosa"), c(1,5)]
 
@@ -17,8 +18,7 @@ ptime <- system.time({
     coefficients(result1)
   }
 })[3]
-cat('parallel foreach:\n')
-print(ptime)
+cat(sprintf('parallel foreach:                    %6.1f sec\n', ptime))
 
 ptime2 <- system.time({
   snowopts <- list(preschedule=TRUE)
@@ -29,8 +29,7 @@ ptime2 <- system.time({
     coefficients(result1)
   }
 })[3]
-cat('parallel foreach with prescheduling:\n')
-print(ptime2)
+cat(sprintf('parallel foreach with prescheduling: %6.1f sec\n', ptime2))
 
 ptime3 <- system.time({
   chunks <- getDoParWorkers()
@@ -44,8 +43,7 @@ ptime3 <- system.time({
     do.call('cbind', y)
   }
 })[3]
-cat('chunked parallel foreach:\n')
-print(ptime3)
+cat(sprintf('chunked parallel foreach:            %6.1f sec\n', ptime3))
 
 ptime4 <- system.time({
   mkworker <- function(x, junk) {
@@ -60,8 +58,7 @@ ptime4 <- system.time({
   y <- parLapply(cl, seq_len(trials), mkworker(x, junk))
   r <- do.call('cbind', y)
 })[3]
-cat('parLapply:\n')
-print(ptime4)
+cat(sprintf('parLapply:                           %6.1f sec\n', ptime4))
 
 stime <- system.time({
   y <- lapply(seq_len(trials), function(i) {
@@ -71,8 +68,7 @@ stime <- system.time({
   })
   r <- do.call('cbind', y)
 })[3]
-cat('sequential lapply:\n')
-print(stime)
+cat(sprintf('sequential lapply:                   %6.1f sec\n', stime))
 
 stime2 <- system.time({
   r <- foreach(icount(trials), .combine=cbind) %do% {
@@ -81,7 +77,6 @@ stime2 <- system.time({
     coefficients(result1)
   }
 })[3]
-cat('sequential foreach:\n')
-print(stime2)
+cat(sprintf('sequential foreach:                  %6.1f sec\n', stime2))
 
 stopCluster(cl)
