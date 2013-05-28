@@ -166,12 +166,14 @@ doSNOW <- function(obj, expr, envir, data) {
       if (!exists(sym, envir, inherits=TRUE))
         stop(sprintf('unable to find variable "%s"', sym))
       val <- get(sym, envir, inherits=TRUE)
-      if (is.function(val) && identical(environment(val), .GlobalEnv)) {
-	# Changing this function's environment to exportenv allows it to
-	# access/execute any other functions defined in exportenv.  This
-	# has always been done for auto-exported functions, and not
-	# doing so for explicitly exported functions results in
-	# functions defined in exportenv that can't call each other.
+      if (is.function(val) &&
+          (identical(environment(val), .GlobalEnv) ||
+           identical(environment(val), envir))) {
+        # Changing this function's environment to exportenv allows it to
+        # access/execute any other functions defined in exportenv.  This
+        # has always been done for auto-exported functions, and not
+        # doing so for explicitly exported functions results in
+        # functions defined in exportenv that can't call each other.
         environment(val) <- exportenv
       }
       assign(sym, val, pos=exportenv, inherits=FALSE)
