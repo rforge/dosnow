@@ -244,9 +244,15 @@ doSNOW <- function(obj, expr, envir, data) {
   # compile the expression if we're using R 2.13.0 or greater
   xpr <- comp(expr, env=envir, options=list(suppressUndefined=TRUE))
 
+  # packageName function added in R 3.0.0
+  pkgname <- if (exists('packageName', mode='function'))
+    packageName(envir)
+  else
+    NULL
+
   if (! preschedule) {
     # send exports to workers
-    r <- clusterCall(cl, workerInit, xpr, exportenv, packageName(envir),
+    r <- clusterCall(cl, workerInit, xpr, exportenv, pkgname,
                      obj$packages, attachExportEnv)
     for (emsg in r) {
       if (!is.null(emsg))
@@ -267,7 +273,7 @@ doSNOW <- function(obj, expr, envir, data) {
 
     # execute the tasks
     results <- do.call(c, clusterApply(cl, argsList, workerPreschedule,
-                                       xpr, exportenv, packageName(envir),
+                                       xpr, exportenv, pkgname,
                                        obj$packages))
   }
 
