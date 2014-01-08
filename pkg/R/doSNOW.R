@@ -35,13 +35,53 @@ makeDotsEnv <- function(...) {
 
 .doSnowGlobals <- new.env(parent=emptyenv())
 
-workerInit <- function(expr, exportenv, packages, attach=FALSE) {
+getparentenv <- function(pkgname) {
+  parenv <- NULL
+
+  # if anything goes wrong, print the error object and return
+  # the global environment
+  tryCatch({
+    # pkgname is NULL in many cases, as when the foreach loop
+    # is executed interactively or in an R script
+    if (is.character(pkgname)) {
+      # load the specified package
+      if (require(pkgname, character.only=TRUE)) {
+        # search for any function in the package
+        pkgenv <- as.environment(paste0('package:', pkgname))
+        for (sym in ls(pkgenv)) {
+          fun <- get(sym, pkgenv, inherits=FALSE)
+          if (is.function(fun)) {
+            env <- environment(fun)
+            if (is.environment(env)) {
+              parenv <- env
+              break
+            }
+          }
+        }
+        if (is.null(parenv)) {
+          stop('loaded ', pkgname, ', but parent search failed', call.=FALSE)
+        } else {
+          message('loaded ', pkgname, ' and set parent environment')
+        }
+      }
+    }
+  },
+  error=function(e) {
+    cat(sprintf('Error getting parent environment: %s\n',
+                conditionMessage(e)))
+  })
+
+  # return the global environment by default
+  if (is.null(parenv)) globalenv() else parenv
+}
+
+workerInit <- function(expr, exportenv, pkgname, packages, attach=FALSE) {
   assign('expr', expr, .doSnowGlobals)
   assign('exportenv', exportenv, .doSnowGlobals)
   exportEnv <- .doSnowGlobals$exportenv
-  parent.env(exportEnv) <- globalenv()
+  parent.env(exportEnv) <- getparentenv(pkgname)
   if (attach) {
-	attach(exportEnv)
+    attach(exportEnv)
   }
 
   tryCatch({
@@ -63,9 +103,9 @@ evalWrapper <- function(args) {
 }
 
 workerCleanup <- function() {
-	if ("exportEnv" %in% search()) {
-		detach(exportEnv)
-	}
+  if ("exportEnv" %in% search()) {
+    detach(exportEnv)
+  }
 }
 
 # This function takes the place of workerInit and evalWrapper when
@@ -75,8 +115,8 @@ workerCleanup <- function() {
 # clusterApplyLB to compute the tasks one-by-one.  This strategy can be
 # significantly more efficient when there are many small tasks, and is
 # very similar to the default behavior of mclapply.
-workerPreschedule <- function(largs, expr, exportenv, packages) {
-  parent.env(exportenv) <- globalenv()
+workerPreschedule <- function(largs, expr, exportenv, pkgname, packages) {
+  parent.env(exportenv) <- getparentenv(pkgname)
   task <- function(args) {
     lapply(names(args), function(n) assign(n, args[[n]], pos=exportenv))
     eval(expr, envir=exportenv)
@@ -133,7 +173,7 @@ doSNOW <- function(obj, expr, envir, data) {
         preschedule <- options$preschedule
       }
     }
-	if (!is.null(options$attachExportEnv)) {
+    if (!is.null(options$attachExportEnv)) {
       if (!is.logical(options$attachExportEnv) ||
           length(options$attachExportEnv) != 1) {
         warning('attachExportEnv must be logical value', call.=FALSE)
@@ -206,7 +246,8 @@ doSNOW <- function(obj, expr, envir, data) {
 
   if (! preschedule) {
     # send exports to workers
-    r <- clusterCall(cl, workerInit, xpr, exportenv, obj$packages, attachExportEnv)
+    r <- clusterCall(cl, workerInit, xpr, exportenv, packageName(envir),
+                     obj$packages, attachExportEnv)
     for (emsg in r) {
       if (!is.null(emsg))
         stop('worker initialization failed: ', emsg)
@@ -215,18 +256,19 @@ doSNOW <- function(obj, expr, envir, data) {
     # execute the tasks
     argsList <- as.list(it)
     results <- clusterApplyLB(cl, argsList, evalWrapper)
-		
-	# clean up the workers
-	if (attachExportEnv){
-	  clusterCall(cl, workerCleanup)
-	}
+
+    # clean up the workers
+    if (attachExportEnv) {
+      clusterCall(cl, workerCleanup)
+    }
   } else {
     # convert argument iterator into a list of lists
     argsList <- splitList(as.list(it), length(cl))
 
     # execute the tasks
     results <- do.call(c, clusterApply(cl, argsList, workerPreschedule,
-                                       xpr, exportenv, obj$packages))
+                                       xpr, exportenv, packageName(envir),
+                                       obj$packages))
   }
 
   # call the accumulator with all of the results
