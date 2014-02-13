@@ -75,12 +75,14 @@ getparentenv <- function(pkgname) {
   if (is.null(parenv)) globalenv() else parenv
 }
 
+
+
 workerInit <- function(expr, exportenv, pkgname, packages, attach=FALSE) {
   assign('expr', expr, .doSnowGlobals)
   assign('exportenv', exportenv, .doSnowGlobals)
   exportEnv <- .doSnowGlobals$exportenv
   parent.env(exportEnv) <- getparentenv(pkgname)
-  if (attach) {
+  if (attach) {   
     attach(exportEnv)
   }
 
