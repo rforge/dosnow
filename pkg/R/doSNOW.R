@@ -149,7 +149,7 @@ doSNOW <- function(obj, expr, envir, data) {
   cl <- data
   preschedule <- FALSE
   attachExportEnv <- FALSE
-  progress <- NULL
+  progressWrapper <- function(...) NULL
 
   if (!inherits(obj, 'foreach'))
     stop('obj must be a foreach object')
@@ -189,13 +189,29 @@ doSNOW <- function(obj, expr, envir, data) {
     }
 
     if (!is.null(options$progress)) {
-      if (!is.function(options$progress)) {
-        warning('progress must be a function', call.=FALSE)
-      } else {
-        if (obj$verbose)
-          cat("progress will be called as each result is returned\n")
-        progress <- options$progress
+      makeProgressWrapper <- function() {
+        tryCatch({
+          progress <- match.fun(options$progress)
+          if (obj$verbose)
+            cat("progress will be called as each result is returned\n")
+          iargs <- seq_along(formals(progress))
+          function(...) {
+            tryCatch({
+              do.call('progress', list(...)[iargs])
+            },
+            error=function(e) {
+              warning('progress function failed: ', conditionMessage(e),
+                      immediate.=TRUE, call.=FALSE)
+            })
+          }
+        },
+        error=function(e) {
+          warning('unable to create progress function: ', conditionMessage(e),
+                  immediate.=TRUE, call.=FALSE)
+          function(...) NULL
+        })
       }
+      progressWrapper <- makeProgressWrapper()
     }
   }
 
@@ -298,8 +314,7 @@ doSNOW <- function(obj, expr, envir, data) {
         accumulate(it, d$value, d$tag)  # XXX error handling
 
         # call progress function with argument nfin and d$tag
-        if (!is.null(progress))
-          progress(nfin, d$tag)
+        progressWrapper(nfin, d$tag)
       }
     },
     error=function(e) {
@@ -319,8 +334,7 @@ doSNOW <- function(obj, expr, envir, data) {
       accumulate(it, d$value, d$tag)  # XXX error handling
 
       # call progress function with argument nfin and d$tag
-      if (!is.null(progress))
-        progress(nfin, d$tag)
+      progressWrapper(nfin, d$tag)
     }
 
     # clean up the workers
