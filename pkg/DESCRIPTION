@@ -1,7 +1,7 @@
 Package: doSNOW
 Type: Package
 Title: Foreach parallel adaptor for the snow package
-Version: 1.0.12
+Version: 1.0.13
 Author: Revolution Analytics, Steve Weston
 Maintainer: Revolution Analytics <packages@revolutionanalytics.com>
 Description: Provides a parallel backend for the %dopar% function using
