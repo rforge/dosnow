@@ -16,7 +16,7 @@ close(pb)
 pb <- tkProgressBar(max=100, title="doSNOW Progress Bar Test")
 progress <- function(n, tag) setTkProgressBar(pb, n,
                 label=sprintf("last completed task: %d", tag))
-opts <- list(progress=progress)
+opts <- list(progress='progress')
 r <- foreach(i=1:100, .options.snow=opts) %dopar% {
   Sys.sleep(1)
   sqrt(i)
@@ -24,7 +24,7 @@ r <- foreach(i=1:100, .options.snow=opts) %dopar% {
 close(pb)
 
 progress <- function() cat('.')
-opts <- list(progress=progress)
+opts <- list(progress='progress')
 r <- foreach(i=1:50, .options.snow=opts) %dopar% {
   Sys.sleep(0.5)
   sqrt(i)
@@ -39,7 +39,7 @@ r <- foreach(i=1:10, .options.snow=opts) %dopar% {
 }
 
 progress <- function(n, tag) stop(tag)
-opts <- list(progress=progress)
+opts <- list(progress='progress')
 r <- foreach(i=1:10, .options.snow=opts) %dopar% {
   Sys.sleep(10 - i)
   sqrt(i)
