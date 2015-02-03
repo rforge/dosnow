@@ -311,9 +311,12 @@ doSNOW <- function(obj, expr, envir, data) {
         nsub <- nsub + 1
 
         # process the result
-        accumulate(it, d$value, d$tag)  # XXX error handling
+        tryCatch(accumulate(it, d$value, d$tag), error=function(e) {
+          cat('error calling combine function:\n')
+          print(e)
+        })
 
-        # call progress function with argument nfin and d$tag
+        # call the user's progress function
         progressWrapper(nfin, d$tag)
       }
     },
@@ -324,16 +327,26 @@ doSNOW <- function(obj, expr, envir, data) {
     })
 
     # process the last received result (if we received any)
-    if (nfin > 0)
-      accumulate(it, d$value, d$tag)  # XXX error handling
+    if (nfin > 0) {
+      tryCatch(accumulate(it, d$value, d$tag), error=function(e) {
+        cat('error calling combine function:\n')
+        print(e)
+      })
+
+      # call the user's progress function
+      progressWrapper(nfin, d$tag)
+    }
 
     # wait for and process all remaining results
     while (nfin < nsub) {
       d <- recvOneResult(cl)
       nfin <- nfin + 1
-      accumulate(it, d$value, d$tag)  # XXX error handling
+      tryCatch(accumulate(it, d$value, d$tag), error=function(e) {
+        cat('error calling combine function:\n')
+        print(e)
+      })
 
-      # call progress function with argument nfin and d$tag
+      # call the user's progress function
       progressWrapper(nfin, d$tag)
     }
 
