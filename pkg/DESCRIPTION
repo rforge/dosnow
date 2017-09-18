@@ -4,7 +4,7 @@ Title: Foreach Parallel Adaptor for the 'snow' Package
 Version: 1.0.15
 Authors@R: c(person("Rich", "Calaway", role="cre",
 					email = "richcala@microsoft.com"), 
-             person("Microsoft Corporation", role=c("aut","cph")),
+             person("Microsoft", "Corporation", role=c("aut","cph")),
 			 person("Stephen", "Weston", role="aut"))
 Description: Provides a parallel backend for the %dopar% function using
         the snow package of Tierney, Rossini, Li, and Sevcikova.
