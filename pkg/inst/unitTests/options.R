@@ -16,29 +16,29 @@ test.preschedule <- function() {
   }
 }
 
-test.attach <- function() {
-    myFun <- function(x){
-        myFun1(x+1)
-       }
-    myFun1 <- function(x){
-        2*x
-     }
-    testFun <- function(){
-        inRes1 <- checkTrue("exportEnv" %in% search())
-        if (!inRes1) {
-            stop("Attaching exportEnv failed")
-        }
-        inRes2 <- checkTrue(exists("myFun1", where=2))
-        if (!inRes1) {
-            stop("myFun1 not found in exportEnv")
-        }
-        myFun(1)
-    }
-    res <- suppressWarnings(foreach(i=1:4, .combine="c", .packages="RUnit", 
-               .export="myFun1", .options.snow=list(attachExportEnv=TRUE)) %dopar%  testFun())
+# test.attach <- function() {
+    # myFun <- function(x){
+        # myFun1(x+1)
+       # }
+    # myFun1 <- function(x){
+        # 2*x
+     # }
+    # testFun <- function(){
+        # inRes1 <- checkTrue("exportEnv" %in% search())
+        # if (!inRes1) {
+            # stop("Attaching exportEnv failed")
+        # }
+        # inRes2 <- checkTrue(exists("myFun1", where=2))
+        # if (!inRes1) {
+            # stop("myFun1 not found in exportEnv")
+        # }
+        # myFun(1)
+    # }
+    # res <- suppressWarnings(foreach(i=1:4, .combine="c", .packages="RUnit", 
+               # .export="myFun1", .options.snow=list(attachExportEnv=TRUE)) %dopar%  testFun())
 
-    checkEquals(res, c(4,4, 4, 4))
-}
+    # checkEquals(res, c(4,4, 4, 4))
+# }
 
 pkgname.test.stress <- function() {
     if (!require(caret, quietly=TRUE)) {

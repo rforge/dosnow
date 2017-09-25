@@ -82,9 +82,9 @@ workerInit <- function(expr, exportenv, pkgname, packages, attach=FALSE) {
   assign('exportenv', exportenv, .doSnowGlobals)
   exportEnv <- .doSnowGlobals$exportenv
   parent.env(exportEnv) <- getparentenv(pkgname)
-  if (attach) {   
-    attach(exportEnv)
-  }
+  # if (attach) {   
+    # attach(exportEnv)
+  # }
 
   tryCatch({
     for (p in packages)
@@ -350,10 +350,10 @@ doSNOW <- function(obj, expr, envir, data) {
       progressWrapper(nfin, d$tag)
     }
 
-    # clean up the workers
-    if (attachExportEnv) {
-      clusterCall(cl, workerCleanup)
-    }
+    # # clean up the workers
+    # if (attachExportEnv) {
+      # clusterCall(cl, workerCleanup)
+    # }
   } else {
     # convert argument iterator into a list of lists
     argsList <- splitList(as.list(it), length(cl))
