@@ -1,7 +1,7 @@
 Package: doSNOW
 Type: Package
 Title: Foreach Parallel Adaptor for the 'snow' Package
-Version: 1.0.16
+Version: 1.0.17
 Authors@R: c(person("Rich", "Calaway", role="cre",
 					email = "richcala@microsoft.com"), 
              person("Microsoft", "Corporation", role=c("aut","cph")),
